@@ -27,7 +27,7 @@ kfparameters = KalmanParameters()
 
 red_lower1 = (141, 85, 186)
 red_upper1 =  (180, 154, 255)
-red_lower2 = (161, 85, 186)
+red_lower2 = (141, 85, 186)
 red_upper2 = (180, 154, 255)
 
 tracked_points = deque(maxlen = args["buffer"])

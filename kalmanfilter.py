@@ -14,8 +14,8 @@ class KalmanFilter:
     # bu 2.row y konumu + y hizi ile yk+1. pozisyonu hesapliyor
     #state matriximizin 3. ve 4. ogeleri hiz oldugundan onlar degismeden kaliyor? hiz nasil degisecek.
     #
-    kf.transitionMatrix = np.array([[1, 0, 1, 0], 
-                                    [0, 1, 0, 1],
+    kf.transitionMatrix = np.array([[1, 0, 200, 0], 
+                                    [0, 1, 0, 200],
                                     [0, 0, 1, 0],
                                     [0, 0, 0, 1]], np.float32)
 
