@@ -5,7 +5,8 @@ import argparse
 import cv2
 import imutils
 import time
-from kalmanfilter import KalmanFilter
+from kalman_diy import KalmanParameters
+
 
 # args kısmına en son gel sen zaten webcamden goruntu alicaksin belki videoyu da parametreli olarak ekleyebilirsin
 
@@ -20,11 +21,11 @@ args = vars(ap.parse_args())
 
 #------------
 
-kf = KalmanFilter()
+kfparameters = KalmanParameters()
 
 #renk araliklari
 
-red_lower1 = (161, 85, 186)
+red_lower1 = (141, 85, 186)
 red_upper1 =  (180, 154, 255)
 red_lower2 = (161, 85, 186)
 red_upper2 = (180, 154, 255)
@@ -72,7 +73,7 @@ while True:
         #The kernel size must be positive and odd (e.g., 3, 5, 7, 9, 11).
         #daha buyuk deger daha cok blur demek 
         #biz blurred imageyi islicez ama asil frameyi display edecegiz
-    blurred = cv2.GaussianBlur(frame,(11,11),0)
+    blurred = cv2.GaussianBlur(frame,(51,51),0)
 
 
     hsvframe = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
@@ -82,8 +83,8 @@ while True:
     mask = mask1 | mask2 
 
 
-    mask = cv2.erode(mask,None,iterations = 2)
-    mask = cv2.dilate(mask,None,iterations = 2)
+    mask = cv2.erode(mask,None,iterations = 4)
+    mask = cv2.dilate(mask,None,iterations = 4)
 
     cv2.imshow("mask", mask)
 
@@ -120,20 +121,35 @@ while True:
 
         #en buyuk contouru kapsayan cemberin bile radius 10dan kucukse o muhtemelen gurultudur hesabi
         #onu almiyoruz
-        if(radius > 10):
+        if(radius > 6):
             
-            cv2.circle(frame,(int(x),int(y)),int(radius),(255,255,0),3)
             
             #centeroid
-            cv2.circle(frame, center, 2, (0, 0, 255), -1)
+            #cv2.circle(frame, center, 2, (0, 0, 255), -1)
+            a,b,c,d = cv2.boundingRect(max_area_contour)
+
+            cv2.circle(frame,(int(center[0]),int(center[1])),10,(0,0,255),3)
+
+            measured = np.array([[np.float32(center[0])], [np.float32(center[1])]])    
+            
+            kfparameters.kalman.correct(measured)
+            estimated = kfparameters.kalman.predict()
+
+            pre_x, pre_y = int(estimated[0, 0]), int(estimated[1, 0])
+            
+
+            cv2.circle(frame,(pre_x,pre_y),9,(60,0,60),-1)
 
         
         #gectigimiz noktayi double-ended queueye ekliyoruz
         #appendleft sola yani ilk siraya ekliyor en guncel elemani
         #quenin buffer sizesi asildikca en eski (sagdaki) elemanlar siliniyor
         tracked_points.appendleft(center)
+    else:
+        if(len(tracked_points) > 0):
+            tracked_points.pop()
 
-        for i in range(1,len(tracked_points)):
+    for i in range(1,len(tracked_points)):
             #son iki nokta arasi cizgi cekecegimizden birinin yoklugunda 
             #cizgiyi cekemeyiz continiue dememiz gerekir
             if tracked_points[i] is None or tracked_points[i-1] is None:
@@ -144,7 +160,8 @@ while True:
                 #en sonundaki ogeler en eski ogeler
                 #so i arttikca eskiye gidiyoruz ve kalinlik azaliyor
                 thickness = int(np.sqrt(args["buffer"] / float(i + 1)) * 2.5)
-                cv2.line(frame, tracked_points[i - 1], tracked_points[i], (0, 0, 255), thickness)
+                cv2.line(frame, tracked_points[i - 1], tracked_points[i], (0, 0,255), thickness)
+        
 
 
     cv2.imshow("frame", frame)
@@ -152,7 +169,7 @@ while True:
 
 
     #bir miktar delay islemek icin gerekli kaldirirsan calismiyor
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(8) & 0xFF == ord('q'):
         break
 
 #webcam kullaniliyorsa

@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import imutils
 
 # Function to do nothing, used for trackbars
 def nothing(x):
@@ -26,6 +27,9 @@ while True:
         break
 
     # Convert the frame to HSV
+    frame = cv2.flip(frame,1)
+    frame = imutils.resize(frame, width=600)
+    frame = cv2.GaussianBlur(frame,(71,71),0)
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # Get the current positions of the trackbars
@@ -40,6 +44,14 @@ while True:
     lower_bound = np.array([h_lower, s_lower, v_lower])
     upper_bound = np.array([h_upper, s_upper, v_upper])
     mask = cv2.inRange(hsv, lower_bound, upper_bound)
+    mask = cv2.erode(mask,None,iterations = 4)
+    mask = cv2.dilate(mask,None,iterations = 4)
+
+        #blurlamak noiseyi ve detaili dusurur
+        #The kernel size must be positive and odd (e.g., 3, 5, 7, 9, 11).
+        #daha buyuk deger daha cok blur demek 
+        #biz blurred imageyi islicez ama asil frameyi display edecegiz
+
 
     # Bitwise-AND mask and original image to extract the ball
     result = cv2.bitwise_and(frame, frame, mask=mask)
