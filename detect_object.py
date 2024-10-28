@@ -4,17 +4,22 @@ import numpy as np
 class DetectColor:
 
 
-    def __init__(self,low,high):
+    def __init__(self):
         ##girecegimizi parametreler opencv hsv cinsinden en alt ve en ust renk siniri
-        self.low_color = low 
-        self.high_color = high
+        self.low_red1 =  np.array([0, 100, 100])
+        self.high_red1 = np.array([10, 255, 255])
+        self.low_red2 = np.array([160, 100, 100])
+        self.high_red2 = np.array([180, 255, 255])
+
         self.mask = None
         self.frame = None
 
     def image2Binary(self):
         assert self.frame is not None, "PLEASE USE setFrame METHOD TO ASSIGN FRAME"
         hsv_image = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
-        return cv2.inRange(hsv_image, self.low_color, self.high_color)
+        mask1 = cv2.inRange(hsv_image, self.low_red1, self.high_red1)
+        mask2 = cv2.inRange(hsv_image, self.low_red2, self.high_red2)
+        return mask1 | mask2 
     
 
     def getContours(self):
@@ -24,7 +29,9 @@ class DetectColor:
         return sorted(contours, key = cv2.contourArea, reverse = True)
     
     def getPosProperties(self):
-        return cv2.boundingRect(self.getContours()[0])
+        if len(self.getContours()) > 0:
+            return cv2.boundingRect(self.getContours()[0])
+        else : return (0,0,0,0)
     
 
     def drawRectangle(self):

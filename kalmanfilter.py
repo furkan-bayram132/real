@@ -29,9 +29,3 @@ class KalmanFilter:
             x, y = int(predicted[0, 0]), int(predicted[1, 0])
             return x, y
 
-if __name__ == "__main__":
-    kf = KalmanFilter()
-    for i in range(0,10): 
-        print("predicted : " + str(kf.predict(50,100)) + "\n" + "state : " +  str(kf.kf.statePost))
-
-
