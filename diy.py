@@ -27,13 +27,11 @@ kfparameters = KalmanParameters()
 
 #renk araliklari
 
-186,255
-215,255
 
-red_lower1 = (0, 186, 149) if args["color"] == "sr" else (0, 100, 100)
-red_upper1 =  (11, 255, 255) if args["color"] == "sr" else (10, 255, 255)
-red_lower2 = (0, 186, 149) if args["color"] == "sr" else (170, 100, 100)
-red_upper2 = (11, 255, 255) if args["color"] == "sr" else (180, 255, 255)
+
+red_lower1 = (0, 121, 134) if args["color"] == "sr" else (141, 85, 186)
+red_upper1 =  (15, 224, 208) if args["color"] == "sr" else (180, 154, 255)
+
 
 tracked_points = deque(maxlen = args["buffer"])
 
@@ -78,23 +76,13 @@ while True:
         #The kernel size must be positive and odd (e.g., 3, 5, 7, 9, 11).
         #daha buyuk deger daha cok blur demek 
         #biz blurred imageyi islicez ama asil frameyi display edecegiz
-    blurred = cv2.GaussianBlur(frame,(51,51),0)
+    blurred = cv2.GaussianBlur(frame,(81,81),0)
 
 
     hsvframe = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
-    h,s,v = cv2.split(hsvframe)
 
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-
-    v_clahe = clahe.apply(v)
-
-    hsvframe = cv2.merge((h,s,v_clahe))
-
-
-    mask1 = cv2.inRange(hsvframe,red_lower1,red_upper1)
-    mask2 = cv2.inRange(hsvframe,red_lower2,red_upper2)
-    mask = mask1 | mask2 
+    mask = cv2.inRange(hsvframe,red_lower1,red_upper1) 
 
 
     mask = cv2.erode(mask,None,iterations = 4)
