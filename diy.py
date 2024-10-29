@@ -15,6 +15,8 @@ ap = argparse.ArgumentParser()
 #bu gerideki noktalari cizdirmek icin i think !!!!!!!!!!!!
 ap.add_argument("-b","--buffer",type = int, default=64, help = "max buffer size")
 ap.add_argument("-v","--video",type = str, help = "path to your optional video (if not specified webcam will be used)" )
+ap.add_argument("-c", "--color", type = str, default = "sr", help = "sr for specific red, anything for all reds")
+
 
 #ayrilmis argumanlari dictionarye cevir
 args = vars(ap.parse_args())
@@ -25,10 +27,13 @@ kfparameters = KalmanParameters()
 
 #renk araliklari
 
-red_lower1 = (141, 85, 186)
-red_upper1 =  (180, 154, 255)
-red_lower2 = (141, 85, 186)
-red_upper2 = (180, 154, 255)
+186,255
+215,255
+
+red_lower1 = (0, 186, 149) if args["color"] == "sr" else (0, 100, 100)
+red_upper1 =  (11, 255, 255) if args["color"] == "sr" else (10, 255, 255)
+red_lower2 = (0, 186, 149) if args["color"] == "sr" else (170, 100, 100)
+red_upper2 = (11, 255, 255) if args["color"] == "sr" else (180, 255, 255)
 
 tracked_points = deque(maxlen = args["buffer"])
 
@@ -78,6 +83,15 @@ while True:
 
     hsvframe = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
+    h,s,v = cv2.split(hsvframe)
+
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+
+    v_clahe = clahe.apply(v)
+
+    hsvframe = cv2.merge((h,s,v_clahe))
+
+
     mask1 = cv2.inRange(hsvframe,red_lower1,red_upper1)
     mask2 = cv2.inRange(hsvframe,red_lower2,red_upper2)
     mask = mask1 | mask2 
@@ -86,7 +100,7 @@ while True:
     mask = cv2.erode(mask,None,iterations = 4)
     mask = cv2.dilate(mask,None,iterations = 4)
 
-    cv2.imshow("mask", mask)
+    #cv2.imshow("mask", mask)
 
     #maskenin copysini kullaniyoruz cunku findContours fonksiyonu icine girilen 
     #maskede degisiklik yapiyor biz orijinal maskemizin manipule olmasini istemiyoruz
@@ -128,12 +142,13 @@ while True:
             #cv2.circle(frame, center, 2, (0, 0, 255), -1)
             a,b,c,d = cv2.boundingRect(max_area_contour)
 
-            cv2.circle(frame,(int(center[0]),int(center[1])),10,(0,0,255),3)
 
             measured = np.array([[np.float32(center[0])], [np.float32(center[1])]])    
             
-            kfparameters.kalman.correct(measured)
+            corrected = kfparameters.kalman.correct(measured)
             estimated = kfparameters.kalman.predict()
+
+            cv2.circle(frame,(int(corrected[0,0]),int(corrected[1,0])),10,(0,0,255),3)
 
             pre_x, pre_y = int(estimated[0, 0]), int(estimated[1, 0])
             
